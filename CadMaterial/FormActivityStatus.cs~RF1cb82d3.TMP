@@ -1,0 +1,56 @@
+﻿using CadMaterial.Business;
+using System;
+using System.Data;
+using System.Windows.Forms;
+
+namespace CadMaterial
+{
+    public partial class FormActivityStatus : Form
+    {
+
+        DataTable processosStatusTable, areasStatusTable;
+        Connection processosStatus, areasStatus;
+
+
+        private String stringDeClasses; // Passa uma lista de classes previamente formatada
+
+        private void cbAreaAmProcess_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            carregarProcessosPorClasses();
+        }
+
+        private void FormActivityStatus_Load(object sender, EventArgs e)
+        {
+            carregarProcessosPorClasses();
+        }
+
+        public FormActivityStatus(String stringDeClasses, String materialID)
+        {
+            InitializeComponent();
+            this.stringDeClasses = stringDeClasses;
+
+            areasStatus = new Connection("AM_PROCESS_SP", " DISTINCT(PROCESS_AREA) ", 
+                                        " WHERE PRODUCT_ID IN('" + stringDeClasses + "','ALL')"); // Carregar áreas que estão disponíveis
+
+            areasStatusTable = areasStatus.loadDataTable();
+
+            cbAreaAmProcess.DataSource = areasStatusTable;
+            cbAreaAmProcess.DisplayMember = "PROCESS_AREA";
+
+            this.Text = "Processos por Area/Classes - Produto " + materialID;
+            this.groupBoxAmProcess.Text = "AM_PROCESS_SP - Produto " + materialID;
+            this.lblClassStr.Text = stringDeClasses;
+        }
+
+        private void carregarProcessosPorClasses()
+        {
+            processosStatus = new Connection("AM_PROCESS_SP", " PROCESS_ID, PROCESS_DESC, PRODUCT_ID, SEQUENCE_GROUP, PREREQ_GROUP ", 
+                                            " WHERE PRODUCT_ID IN('"+ stringDeClasses + "','ALL') AND PROCESS_AREA = '"
+                                               + cbAreaAmProcess.Text + "'"); // Carregar classes pela área na AM_PROCESS_SP
+
+            processosStatusTable = processosStatus.loadDataTable();
+
+            dgListaDeProcessos.DataSource = processosStatusTable;
+        }
+    }
+}
